@@ -3,6 +3,8 @@ import 'package:camera/camera.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 void main() {
   runApp(const MyApp());
@@ -52,6 +54,8 @@ class _MyHomePageState extends State<MyHomePage> {
   String? _audioFilePath;
   bool _isRecording = false;
   bool _isSendingAudio = false;
+  final ImagePicker _picker = ImagePicker();
+  XFile? _imageFile;
 
   void _incrementCounter() {
     setState(() {
@@ -106,6 +110,13 @@ class _MyHomePageState extends State<MyHomePage> {
       final image = await _cameraController!.takePicture();
       // Implement sending picture logic here using image.path
     }
+  }
+
+  Future<void> takePhoto(ImageSource source) async {
+    final pickedFile = await _picker.pickImage(source: source);
+    setState(() {
+      _imageFile = pickedFile;
+    });
   }
 
   @override
@@ -181,13 +192,18 @@ class _MyHomePageState extends State<MyHomePage> {
                 IconButton(
                   icon: Icon(Icons.camera_alt),
                   color: Colors.white,
-                  onPressed: takePicture,
+                  onPressed: () {
+                    takePhoto(ImageSource.camera);
+                  },
                 ),
                 IconButton(
-                  icon: Icon(_isRecording ? Icons.stop : Icons.mic),
-                  color: Colors.white,
-                  onPressed: _isRecording ? stopRecording : startRecording,
-                ),
+                    icon: Icon(_isRecording ? Icons.stop : Icons.mic),
+                    color: Colors.white,
+                    onPressed: () {
+                      takePhoto(ImageSource.gallery);
+                    }
+                    // onPressed: _isRecording ? stopRecording : startRecording,
+                    ),
                 Expanded(
                   child: TextField(
                     decoration: InputDecoration(
