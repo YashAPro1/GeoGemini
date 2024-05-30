@@ -4,7 +4,11 @@ import 'package:flutter_sound/flutter_sound.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:google_generative_ai/google_generative_ai.dart';
+import 'dart:async';
+import 'package:flutter/services.dart' show rootBundle;
 import 'dart:io';
+import 'dart:typed_data';
 
 void main() {
   runApp(const MyApp());
@@ -119,6 +123,66 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  void askGemini(XFile? imageFile) async {
+    final API_KEY = "AIzaSyDwCk63cbbiltyi7CW9X4pPp1f03Kdk9mc";
+    if (API_KEY == null) {
+      print("No API Key");
+    }
+
+    final model = GenerativeModel(model: 'gemini-1.5-flash', apiKey: API_KEY);
+    final image;
+
+    try {
+      if (imageFile != null) {
+        print(imageFile.path);
+        print("hi");
+        image = await File(imageFile.path).readAsBytes();
+      } else {
+        image =
+            (await rootBundle.load('assets/image1.jpg')).buffer.asUint8List();
+      }
+    } catch (e) {
+      print("Error loading image: $e");
+      return;
+    }
+
+    final prompt = TextPart("Solve the question in this image");
+
+    final imageParts = [DataPart('image/jpeg', image)];
+
+    final response = await model.generateContent([
+      Content.multi([prompt, ...imageParts])
+    ]);
+
+    print(response.text);
+  }
+
+// void askGemini(String imageSource) async {
+//   final API_KEY = ""; // Add your actual API key here
+//   if (API_KEY.isEmpty) {
+//     print("No API Key");
+//     return;
+//   }
+
+//   final model = GenerativeModel(model: 'gemini-1.5-flash', apiKey: API_KEY);
+
+//   Uint8List image;
+//   if (imageSource != null && imageSource.isNotEmpty) {
+//     image = (await rootBundle.load(imageSource)).buffer.asUint8List();
+//   } else {
+//     image = (await rootBundle.load('assets/image1.jpg')).buffer.asUint8List();
+//   }
+
+//   final prompt = TextPart("Solve the question in this image");
+//   final imageParts = [DataPart('image/jpeg', image)];
+
+//   final response = await model.generateContent([
+//     Content.multi([prompt, ...imageParts])
+//   ]);
+
+//   print(response.text);
+// }
+
   @override
   void dispose() {
     _cameraController?.dispose();
@@ -219,7 +283,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   icon: Icon(Icons.send),
                   color: Colors.white,
                   onPressed: () {
-                    // We will be sending message logic here
+                    askGemini(_imageFile);
                   },
                 ),
               ],
