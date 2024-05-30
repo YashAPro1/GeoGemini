@@ -4,10 +4,8 @@ import 'package:flutter_sound/flutter_sound.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
-import 'dart:io';
 import 'dart:async';
 import 'package:flutter/services.dart' show rootBundle;
-import 'dart:typed_data';
 
 
 void main() {
@@ -103,7 +101,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> takePicture() async {
     if (_cameraController != null) {
       final image = await _cameraController!.takePicture();
-      // Implement sending picture logic here using image.path
+      
     }
   }
 
