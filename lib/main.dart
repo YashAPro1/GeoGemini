@@ -3,6 +3,12 @@ import 'package:camera/camera.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:google_generative_ai/google_generative_ai.dart';
+import 'dart:io';
+import 'dart:async';
+import 'package:flutter/services.dart' show rootBundle;
+import 'dart:typed_data';
+
 
 void main() {
   runApp(const MyApp());
@@ -45,19 +51,12 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
   List<CameraDescription> _cameras = [];
   CameraController? _cameraController;
   late FlutterSoundRecorder _recorder;
   String? _audioFilePath;
   bool _isRecording = false;
   bool _isSendingAudio = false;
-
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
 
   @override
   void initState() {
@@ -108,6 +107,29 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
+  void askGemini() async {
+    final API_KEY = "AIzaSyDwCk63cbbiltyi7CW9X4pPp1f03Kdk9mc";
+    if(API_KEY == null){
+      print("No API Key");
+    }
+
+    final model = GenerativeModel(model: 'gemini-1.5-flash', apiKey: API_KEY);
+
+    final (image) = (await rootBundle.load('assets/image1.jpg')).buffer.asUint8List();
+
+    final prompt = TextPart("Solve the question in this image");
+
+    final imageParts = [
+      DataPart('image/jpeg', image)
+    ];
+
+    final response = await model.generateContent([
+      Content.multi([prompt, ...imageParts])
+    ]);
+
+    print(response.text);
+  }
+
   @override
   void dispose() {
     _cameraController?.dispose();
@@ -119,7 +141,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color(0xFF222831),
+        backgroundColor: const Color(0xFF222831),
         // backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Row(
           children: [
@@ -138,17 +160,18 @@ class _MyHomePageState extends State<MyHomePage> {
                 onPressed: sendAudio,
               ),
             ),
-            Text('GeoGemini Chat Page', style: TextStyle(color: Colors.white)),
+            const Text('GeoGemini Chat Page',
+                style: TextStyle(color: Colors.white)),
           ],
         ),
         // title: Text(widget.title, style: TextStyle(color: Colors.white)),
       ),
-      backgroundColor: Color(0xFF31363F),
+      backgroundColor: const Color(0xFF31363F),
       body: Column(
         children: [
           Expanded(
             child: ListView(
-              children: [
+              children: const [
                 // Display messages here
               ],
             ),
@@ -158,9 +181,9 @@ class _MyHomePageState extends State<MyHomePage> {
               padding: const EdgeInsets.all(8.0),
               child: Row(
                 children: [
-                  Text('Audio recorded', style: TextStyle(color: Colors.white)),
+                  const Text('Audio recorded', style: TextStyle(color: Colors.white)),
                   IconButton(
-                    icon: Icon(Icons.send),
+                    icon: const Icon(Icons.send),
                     color: Colors.white,
                     onPressed: sendAudio,
                   ),
@@ -179,7 +202,7 @@ class _MyHomePageState extends State<MyHomePage> {
             child: Row(
               children: [
                 IconButton(
-                  icon: Icon(Icons.camera_alt),
+                  icon: const Icon(Icons.camera_alt),
                   color: Colors.white,
                   onPressed: takePicture,
                 ),
@@ -190,20 +213,20 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
                 Expanded(
                   child: TextField(
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       hintText: 'Type a message',
                     ),
-                    style: TextStyle(color: Colors.white),
+                    style: const TextStyle(color: Colors.white),
                     onSubmitted: (text) {
                       // We will be sending message logic here
                     },
                   ),
                 ),
                 IconButton(
-                  icon: Icon(Icons.send),
+                  icon: const Icon(Icons.send),
                   color: Colors.white,
                   onPressed: () {
-                    // We will be sending message logic here
+                    askGemini();
                   },
                 ),
               ],
