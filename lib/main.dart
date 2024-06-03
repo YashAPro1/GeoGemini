@@ -58,6 +58,7 @@ class _MyHomePageState extends State<MyHomePage> {
   String? _audioFilePath;
   bool _isRecording = false;
   bool _isSendingAudio = false;
+  bool _isTyping = false;
   final ImagePicker _picker = ImagePicker();
   XFile? _imageFile;
   String? _botResponse = "";
@@ -229,27 +230,32 @@ class _MyHomePageState extends State<MyHomePage> {
             child: ListView(
               reverse: true,
               children: [
-                _botResponse != "" ? Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: Container(
-                        decoration: BoxDecoration(
-                            color: Color.fromRGBO(100, 100, 100, 0.7),
-                            borderRadius:
-                                BorderRadius.all(Radius.circular(10.0))),
-                        child: Padding(
-                            padding: EdgeInsets.all(16.0),
-                            child: Text(_botResponse ?? "Thinking...",
-                                style: TextStyle(color: Colors.white))))) : Container(),
-                _imageFile != null ? Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: Container(
-                        decoration: BoxDecoration(
-                            color: Color.fromRGBO(100, 100, 100, 0.7),
-                            borderRadius:
-                                BorderRadius.all(Radius.circular(10.0))),
-                        child: Padding(
-                            padding: EdgeInsets.all(16.0),
-                            child: Image.file(File(_imageFile?.path ?? ""))))) : Container(),
+                _botResponse != ""
+                    ? Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: Container(
+                            decoration: BoxDecoration(
+                                color: Color.fromRGBO(100, 100, 100, 0.7),
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(10.0))),
+                            child: Padding(
+                                padding: EdgeInsets.all(16.0),
+                                child: Text(_botResponse ?? "Thinking...",
+                                    style: TextStyle(color: Colors.white)))))
+                    : Container(),
+                _imageFile != null
+                    ? Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: Container(
+                            decoration: BoxDecoration(
+                                color: Color.fromRGBO(100, 100, 100, 0.7),
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(10.0))),
+                            child: Padding(
+                                padding: EdgeInsets.all(16.0),
+                                child:
+                                    Image.file(File(_imageFile?.path ?? "")))))
+                    : Container(),
               ],
             ),
           ),
@@ -278,21 +284,74 @@ class _MyHomePageState extends State<MyHomePage> {
             padding: const EdgeInsets.all(8.0),
             child: Row(
               children: [
-                IconButton(
-                  icon: Icon(Icons.camera_alt),
-                  color: Colors.white,
-                  onPressed: () {
-                    takePhoto(ImageSource.camera);
-                  },
+                // IconButton(
+                //     icon: Icon(Icons.add_circle_rounded),
+                //     color: Colors.white,
+                //     onPressed: () {
+                //       setState(() {
+                //         if (_isTyping == true) {
+                //           setState(() {
+                //             _isTyping = true;
+                //           });
+                //         } else {
+                //           setState(() {
+                //             _isTyping = false;
+                //           });
+                //         }
+                //       });
+                //     }
+                //     // onPressed: _isRecording ? stopRecording : startRecording,
+                //     ),
+                Visibility(
+                  visible: !_isTyping,
+                  child: Row(children: [
+                    Container(
+                      // padding: const EdgeInsets.all(8.0),
+                      child: Row(
+                        children: [
+                          IconButton(
+                            icon: Icon(Icons.camera_alt),
+                            color: Colors.white,
+                            onPressed: () {
+                              takePhoto(ImageSource.camera);
+                            },
+                          ),
+                          IconButton(
+                              icon: Icon(Icons.add_a_photo),
+                              color: Colors.white,
+                              onPressed: () {
+                                takePhoto(ImageSource.gallery);
+                              }
+                              // onPressed: _isRecording ? stopRecording : startRecording,
+                              ),
+                          IconButton(
+                              icon: Icon(_isRecording ? Icons.stop : Icons.mic),
+                              color: Colors.white,
+                              onPressed: () {
+                                takePhoto(ImageSource.gallery);
+                              }
+                              // onPressed: _isRecording ? stopRecording : startRecording,
+                              ),
+                        ],
+                      ),
+                    )
+                  ]),
                 ),
-                IconButton(
-                    icon: Icon(_isRecording ? Icons.stop : Icons.mic),
-                    color: Colors.white,
-                    onPressed: () {
-                      takePhoto(ImageSource.gallery);
-                    }
-                    // onPressed: _isRecording ? stopRecording : startRecording,
-                    ),
+                // IconButton(
+                //   icon: Icon(Icons.camera_alt),
+                //   color: Colors.white,
+                //   onPressed: () {
+                //     takePhoto(ImageSource.camera);
+                //   },
+                // ),
+                // IconButton(
+                //     icon: Icon(_isRecording ? Icons.stop : Icons.mic),
+                //     color: Colors.white,
+                //     onPressed: () {
+                //       takePhoto(ImageSource.gallery);
+                //     }
+                //     // onPressed: _isRecording ? stopRecording : startRecording,
+                //     ),
                 Expanded(
                   child: TextField(
                     decoration: InputDecoration(
@@ -300,6 +359,17 @@ class _MyHomePageState extends State<MyHomePage> {
                       hintStyle: TextStyle(color: Colors.grey),
                     ),
                     style: TextStyle(color: Colors.white),
+                    onChanged: (text) {
+                      if (text.isNotEmpty) {
+                        setState(() {
+                          _isTyping = true;
+                        });
+                      } else {
+                        setState(() {
+                          _isTyping = false;
+                        });
+                      }
+                    },
                     onSubmitted: (text) {
                       // We will be sending message logic here
                     },
