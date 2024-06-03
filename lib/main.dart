@@ -60,6 +60,7 @@ class _MyHomePageState extends State<MyHomePage> {
   bool _isSendingAudio = false;
   final ImagePicker _picker = ImagePicker();
   XFile? _imageFile;
+  String? _botResponse = "";
 
   void _incrementCounter() {
     setState(() {
@@ -155,6 +156,9 @@ class _MyHomePageState extends State<MyHomePage> {
     ]);
 
     print(response.text);
+    setState(() {
+      _botResponse = response.text;
+    });
   }
 
 // void askGemini(String imageSource) async {
@@ -223,8 +227,29 @@ class _MyHomePageState extends State<MyHomePage> {
         children: [
           Expanded(
             child: ListView(
+              reverse: true,
               children: [
-                // Display messages here
+                _botResponse != "" ? Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Container(
+                        decoration: BoxDecoration(
+                            color: Color.fromRGBO(100, 100, 100, 0.7),
+                            borderRadius:
+                                BorderRadius.all(Radius.circular(10.0))),
+                        child: Padding(
+                            padding: EdgeInsets.all(16.0),
+                            child: Text(_botResponse ?? "Thinking...",
+                                style: TextStyle(color: Colors.white))))) : Container(),
+                _imageFile != null ? Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Container(
+                        decoration: BoxDecoration(
+                            color: Color.fromRGBO(100, 100, 100, 0.7),
+                            borderRadius:
+                                BorderRadius.all(Radius.circular(10.0))),
+                        child: Padding(
+                            padding: EdgeInsets.all(16.0),
+                            child: Image.file(File(_imageFile?.path ?? ""))))) : Container(),
               ],
             ),
           ),
@@ -272,6 +297,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   child: TextField(
                     decoration: InputDecoration(
                       hintText: 'Type a message',
+                      hintStyle: TextStyle(color: Colors.grey),
                     ),
                     style: TextStyle(color: Colors.white),
                     onSubmitted: (text) {
