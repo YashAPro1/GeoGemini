@@ -62,6 +62,7 @@ class _MyHomePageState extends State<MyHomePage> {
   final ImagePicker _picker = ImagePicker();
   XFile? _imageFile;
   String? _botResponse = "";
+  bool _responseLoading = false;
 
   void _incrementCounter() {
     setState(() {
@@ -121,8 +122,11 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> takePhoto(ImageSource source) async {
     final pickedFile = await _picker.pickImage(source: source);
     setState(() {
+      _botResponse = "";
       _imageFile = pickedFile;
     });
+
+    askGemini(_imageFile);
   }
 
   void askGemini(XFile? imageFile) async {
@@ -130,6 +134,10 @@ class _MyHomePageState extends State<MyHomePage> {
     if (API_KEY == null) {
       print("No API Key");
     }
+
+    setState(() {
+      _responseLoading = true;
+    });
 
     final model = GenerativeModel(model: 'gemini-1.5-flash', apiKey: API_KEY);
     final image;
@@ -156,37 +164,11 @@ class _MyHomePageState extends State<MyHomePage> {
       Content.multi([prompt, ...imageParts])
     ]);
 
-    print(response.text);
     setState(() {
+      _responseLoading = false;
       _botResponse = response.text;
     });
   }
-
-// void askGemini(String imageSource) async {
-//   final API_KEY = ""; // Add your actual API key here
-//   if (API_KEY.isEmpty) {
-//     print("No API Key");
-//     return;
-//   }
-
-//   final model = GenerativeModel(model: 'gemini-1.5-flash', apiKey: API_KEY);
-
-//   Uint8List image;
-//   if (imageSource != null && imageSource.isNotEmpty) {
-//     image = (await rootBundle.load(imageSource)).buffer.asUint8List();
-//   } else {
-//     image = (await rootBundle.load('assets/image1.jpg')).buffer.asUint8List();
-//   }
-
-//   final prompt = TextPart("Solve the question in this image");
-//   final imageParts = [DataPart('image/jpeg', image)];
-
-//   final response = await model.generateContent([
-//     Content.multi([prompt, ...imageParts])
-//   ]);
-
-//   print(response.text);
-// }
 
   @override
   void dispose() {
@@ -199,26 +181,20 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        shadowColor: Colors.black12,
         backgroundColor: Color(0xFF222831),
         // backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Row(
           children: [
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white, // Background color of the container
+            Padding(
+              padding: EdgeInsets.fromLTRB(0, 0, 8, 0),
+              child: ClipRRect(
                 borderRadius: BorderRadius.circular(8.0), // Border radius
-              ),
-              child: IconButton(
-                icon: const ImageIcon(
-                  AssetImage(
-                      'assets/geogeminiicon.jpg'), // Use your custom image
-                  color: Colors.white,
-                ),
-                color: Colors.white,
-                onPressed: sendAudio,
+                child: Image(
+                    height: 35, image: AssetImage("assets/geogeminiicon.jpg")),
               ),
             ),
-            Text('GeoGemini Chat Page', style: TextStyle(color: Colors.white)),
+            Text('GeoGemini', style: TextStyle(color: Colors.white)),
           ],
         ),
         // title: Text(widget.title, style: TextStyle(color: Colors.white)),
@@ -232,20 +208,34 @@ class _MyHomePageState extends State<MyHomePage> {
               children: [
                 _botResponse != ""
                     ? Padding(
-                        padding: EdgeInsets.all(16.0),
+                        padding: const EdgeInsets.fromLTRB(32, 16, 8, 16),
                         child: Container(
-                            decoration: BoxDecoration(
-                                color: Color.fromRGBO(100, 100, 100, 0.7),
+                            decoration: const BoxDecoration(
+                                color: Color.fromRGBO(102, 87, 116, 0.675),
                                 borderRadius:
                                     BorderRadius.all(Radius.circular(10.0))),
                             child: Padding(
-                                padding: EdgeInsets.all(16.0),
+                                padding: const EdgeInsets.all(16.0),
                                 child: Text(_botResponse ?? "Thinking...",
-                                    style: TextStyle(color: Colors.white)))))
-                    : Container(),
+                                    style:
+                                        const TextStyle(color: Colors.white)))))
+                    : _responseLoading
+                        ? Padding(
+                            padding: const EdgeInsets.fromLTRB(32, 16, 8, 16),
+                            child: Container(
+                                decoration: const BoxDecoration(
+                                    color: Color.fromRGBO(102, 87, 116, 0.675),
+                                    borderRadius: BorderRadius.all(
+                                        Radius.circular(10.0))),
+                                child: const Padding(
+                                    padding: EdgeInsets.all(16.0),
+                                    child: Text("Thinking...",
+                                        style:
+                                            TextStyle(color: Colors.white)))))
+                        : Container(),
                 _imageFile != null
                     ? Padding(
-                        padding: EdgeInsets.all(16.0),
+                        padding: EdgeInsets.fromLTRB(8, 16, 32, 16),
                         child: Container(
                             decoration: BoxDecoration(
                                 color: Color.fromRGBO(100, 100, 100, 0.7),
@@ -284,40 +274,22 @@ class _MyHomePageState extends State<MyHomePage> {
             padding: const EdgeInsets.all(8.0),
             child: Row(
               children: [
-                // IconButton(
-                //     icon: Icon(Icons.add_circle_rounded),
-                //     color: Colors.white,
-                //     onPressed: () {
-                //       setState(() {
-                //         if (_isTyping == true) {
-                //           setState(() {
-                //             _isTyping = true;
-                //           });
-                //         } else {
-                //           setState(() {
-                //             _isTyping = false;
-                //           });
-                //         }
-                //       });
-                //     }
-                //     // onPressed: _isRecording ? stopRecording : startRecording,
-                //     ),
                 Visibility(
                   visible: !_isTyping,
                   child: Row(children: [
                     Container(
-                      // padding: const EdgeInsets.all(8.0),
                       child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
                           IconButton(
-                            icon: Icon(Icons.camera_alt),
+                            icon: const Icon(Icons.camera_alt),
                             color: Colors.white,
                             onPressed: () {
                               takePhoto(ImageSource.camera);
                             },
                           ),
                           IconButton(
-                              icon: Icon(Icons.add_a_photo),
+                              icon: const Icon(Icons.image),
                               color: Colors.white,
                               onPressed: () {
                                 takePhoto(ImageSource.gallery);
@@ -337,28 +309,13 @@ class _MyHomePageState extends State<MyHomePage> {
                     )
                   ]),
                 ),
-                // IconButton(
-                //   icon: Icon(Icons.camera_alt),
-                //   color: Colors.white,
-                //   onPressed: () {
-                //     takePhoto(ImageSource.camera);
-                //   },
-                // ),
-                // IconButton(
-                //     icon: Icon(_isRecording ? Icons.stop : Icons.mic),
-                //     color: Colors.white,
-                //     onPressed: () {
-                //       takePhoto(ImageSource.gallery);
-                //     }
-                //     // onPressed: _isRecording ? stopRecording : startRecording,
-                //     ),
                 Expanded(
                   child: TextField(
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       hintText: 'Type a message',
                       hintStyle: TextStyle(color: Colors.grey),
                     ),
-                    style: TextStyle(color: Colors.white),
+                    style: const TextStyle(color: Colors.white),
                     onChanged: (text) {
                       if (text.isNotEmpty) {
                         setState(() {
@@ -375,13 +332,13 @@ class _MyHomePageState extends State<MyHomePage> {
                     },
                   ),
                 ),
-                IconButton(
-                  icon: Icon(Icons.send),
-                  color: Colors.white,
-                  onPressed: () {
-                    askGemini(_imageFile);
-                  },
-                ),
+                _isTyping
+                    ? IconButton(
+                        icon: Icon(Icons.send),
+                        color: Colors.white,
+                        onPressed: () {},
+                      )
+                    : Container(),
               ],
             ),
           ),
