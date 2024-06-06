@@ -9,6 +9,7 @@ import 'dart:async';
 import 'package:flutter/services.dart' show rootBundle;
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 void main() {
   runApp(const MyApp());
@@ -63,6 +64,11 @@ class _MyHomePageState extends State<MyHomePage> {
   XFile? _imageFile;
   String? _botResponse = "";
   bool _responseLoading = false;
+  late stt.SpeechToText _speech;
+  bool _isListening = false;
+  String _text = '';
+  String _textSend = "";
+  final TextEditingController _textController = TextEditingController();
 
   void _incrementCounter() {
     setState(() {
@@ -76,6 +82,7 @@ class _MyHomePageState extends State<MyHomePage> {
     initializeCamera();
     _recorder = FlutterSoundRecorder();
     _recorder.openRecorder();
+    _speech = stt.SpeechToText();
   }
 
   Future<void> initializeCamera() async {
@@ -116,6 +123,47 @@ class _MyHomePageState extends State<MyHomePage> {
     if (_cameraController != null) {
       final image = await _cameraController!.takePicture();
       // Implement sending picture logic here using image.path
+    }
+  }
+
+  void _listen() async {
+    if (!_isListening) {
+      setState(() {
+        // _responseLoading = false;
+        _botResponse = "Listening!!";
+      });
+      bool available = await _speech.initialize(
+        onStatus: (val) => print('onStatus: $val'),
+        onError: (val) => print('onError: $val'),
+      );
+      // print(_isListening);
+      // print(available);
+      if (available) {
+        // print("hi there");
+        setState(() {
+          _isListening = true;
+          _isTyping = true;
+        });
+        // print(_isListening);
+        _speech.listen(
+          onResult: (val) => setState(() {
+            // _textSend = val.recognizedWords;
+            // _text = val.recognizedWords;
+
+            _textController.text = val.recognizedWords;
+            // );
+            // print(_text);
+            // _text = val.recognizedWords;
+          }),
+        );
+        setState(() {
+          _isListening = false;
+        });
+      }
+    } else {
+      // print("hi");
+      setState(() => _isListening = false);
+      _speech.stop();
     }
   }
 
@@ -170,10 +218,41 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  void askGeminitext(String textMessage) async {
+    final API_KEY = "AIzaSyDwCk63cbbiltyi7CW9X4pPp1f03Kdk9mc";
+    if (API_KEY == null) {
+      print("No API Key");
+      return;
+    }
+    print("Hi" + textMessage);
+    setState(() {
+      _responseLoading = true;
+    });
+
+    final model = GenerativeModel(model: 'gemini-pro', apiKey: API_KEY);
+
+    try {
+      // final prompt = [Content.text(textMessage ?? "")];
+      final response = await model.generateContent([Content.text(textMessage)]);
+
+      setState(() {
+        _responseLoading = false;
+        _botResponse = response.text;
+      });
+    } catch (e) {
+      print("Error generating response: $e");
+      setState(() {
+        _responseLoading = false;
+        _botResponse = "Error generating response";
+      });
+    }
+  }
+
   @override
   void dispose() {
     _cameraController?.dispose();
     _recorder.closeRecorder();
+    _textController.dispose();
     super.dispose();
   }
 
@@ -246,23 +325,36 @@ class _MyHomePageState extends State<MyHomePage> {
                                 child:
                                     Image.file(File(_imageFile?.path ?? "")))))
                     : Container(),
+                _textSend != ""
+                    ? Padding(
+                        padding: EdgeInsets.fromLTRB(8, 16, 32, 16),
+                        child: Container(
+                            decoration: BoxDecoration(
+                                color: Color.fromRGBO(100, 100, 100, 0.7),
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(10.0))),
+                            child: Padding(
+                                padding: EdgeInsets.all(16.0),
+                                child: Text(_textSend,
+                                    style: TextStyle(color: Colors.white)))))
+                    : Container()
               ],
             ),
           ),
-          if (_isSendingAudio)
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
-                children: [
-                  Text('Audio recorded', style: TextStyle(color: Colors.white)),
-                  IconButton(
-                    icon: Icon(Icons.send),
-                    color: Colors.white,
-                    onPressed: sendAudio,
-                  ),
-                ],
-              ),
-            ),
+          // if (_isSendingAudio)
+          //   Padding(
+          //     padding: const EdgeInsets.all(8.0),
+          //     child: Row(
+          //       children: [
+          //         Text('Audio recorded', style: TextStyle(color: Colors.white)),
+          //         IconButton(
+          //           icon: Icon(Icons.send),
+          //           color: Colors.white,
+          //           onPressed: sendAudio,
+          //         ),
+          //       ],
+          //     ),
+          //   ),
           Container(
             decoration: const BoxDecoration(
               // color: Colors.white,
@@ -296,14 +388,20 @@ class _MyHomePageState extends State<MyHomePage> {
                               }
                               // onPressed: _isRecording ? stopRecording : startRecording,
                               ),
+                          // FloatingActionButton(
+                          //   onPressed: _listen,
+                          //   child:
+                          //       Icon(_isListening ? Icons.mic : Icons.mic_none),
+                          // ),
                           IconButton(
-                              icon: Icon(_isRecording ? Icons.stop : Icons.mic),
-                              color: Colors.white,
-                              onPressed: () {
-                                takePhoto(ImageSource.gallery);
-                              }
-                              // onPressed: _isRecording ? stopRecording : startRecording,
-                              ),
+                            icon:
+                                Icon(_isListening ? Icons.mic : Icons.mic_none),
+                            color: Colors.white,
+                            onPressed: () {
+                              _listen();
+                            },
+                            // onPressed: _isRecording ? stopRecording : startRecording,
+                          ),
                         ],
                       ),
                     )
@@ -311,6 +409,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
                 Expanded(
                   child: TextField(
+                    controller: _textController,
                     decoration: const InputDecoration(
                       hintText: 'Type a message',
                       hintStyle: TextStyle(color: Colors.grey),
@@ -320,6 +419,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       if (text.isNotEmpty) {
                         setState(() {
                           _isTyping = true;
+                          _text = text;
                         });
                       } else {
                         setState(() {
@@ -336,7 +436,16 @@ class _MyHomePageState extends State<MyHomePage> {
                     ? IconButton(
                         icon: Icon(Icons.send),
                         color: Colors.white,
-                        onPressed: () {},
+                        onPressed: () {
+                          setState(() {
+                            _textSend = _text;
+                          });
+                          _textController.clear(); // Clear the text field
+                          askGeminitext(_text);
+                          setState(() {
+                            _isTyping = false;
+                          });
+                        },
                       )
                     : Container(),
               ],
