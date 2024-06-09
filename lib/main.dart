@@ -204,7 +204,8 @@ class _MyHomePageState extends State<MyHomePage> {
       return;
     }
 
-    final prompt = TextPart("Solve the question in this image");
+    final prompt = TextPart(
+        "Solve the Mathematical Question in the image (If it is not a Mathematical Question, return 'Not a Mathematical Question'):");
 
     final imageParts = [DataPart('image/jpeg', image)];
 
@@ -219,21 +220,21 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void askGeminitext(String textMessage) async {
-    final API_KEY = "AIzaSyDwCk63cbbiltyi7CW9X4pPp1f03Kdk9mc";
-    if (API_KEY == null) {
-      print("No API Key");
-      return;
-    }
-    print("Hi" + textMessage);
+    const API_KEY = "AIzaSyDwCk63cbbiltyi7CW9X4pPp1f03Kdk9mc";
     setState(() {
+      _botResponse = "";
+      _imageFile = null;
       _responseLoading = true;
     });
 
     final model = GenerativeModel(model: 'gemini-pro', apiKey: API_KEY);
 
+    final prompt =
+        "Solve the following Mathematical Question (If it is not a Mathematical Question, return 'Not a Mathematical Question'): $textMessage";
+
     try {
       // final prompt = [Content.text(textMessage ?? "")];
-      final response = await model.generateContent([Content.text(textMessage)]);
+      final response = await model.generateContent([Content.text(prompt)]);
 
       setState(() {
         _responseLoading = false;
@@ -266,78 +267,117 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Row(
           children: [
             Padding(
-              padding: EdgeInsets.fromLTRB(0, 0, 8, 0),
+              padding: const EdgeInsets.fromLTRB(0, 0, 8, 0),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(8.0), // Border radius
-                child: Image(
+                child: const Image(
                     height: 35, image: AssetImage("assets/geogeminiicon.jpg")),
               ),
             ),
-            Text('GeoGemini', style: TextStyle(color: Colors.white)),
+            const Text('GeoGemini', style: TextStyle(color: Colors.white)),
           ],
         ),
         // title: Text(widget.title, style: TextStyle(color: Colors.white)),
       ),
-      backgroundColor: Color(0xFF31363F),
+      backgroundColor: const Color(0xFF31363F),
       body: Column(
         children: [
           Expanded(
             child: ListView(
               reverse: true,
               children: [
-                _botResponse != ""
-                    ? Padding(
-                        padding: const EdgeInsets.fromLTRB(32, 16, 8, 16),
-                        child: Container(
-                            decoration: const BoxDecoration(
-                                color: Color.fromRGBO(102, 87, 116, 0.675),
-                                borderRadius:
-                                    BorderRadius.all(Radius.circular(10.0))),
-                            child: Padding(
-                                padding: const EdgeInsets.all(16.0),
-                                child: Text(_botResponse ?? "Thinking...",
-                                    style:
-                                        const TextStyle(color: Colors.white)))))
-                    : _responseLoading
-                        ? Padding(
-                            padding: const EdgeInsets.fromLTRB(32, 16, 8, 16),
-                            child: Container(
-                                decoration: const BoxDecoration(
-                                    color: Color.fromRGBO(102, 87, 116, 0.675),
-                                    borderRadius: BorderRadius.all(
-                                        Radius.circular(10.0))),
-                                child: const Padding(
-                                    padding: EdgeInsets.all(16.0),
-                                    child: Text("Thinking...",
-                                        style:
-                                            TextStyle(color: Colors.white)))))
-                        : Container(),
-                _imageFile != null
-                    ? Padding(
-                        padding: EdgeInsets.fromLTRB(8, 16, 32, 16),
-                        child: Container(
-                            decoration: BoxDecoration(
-                                color: Color.fromRGBO(100, 100, 100, 0.7),
-                                borderRadius:
-                                    BorderRadius.all(Radius.circular(10.0))),
-                            child: Padding(
-                                padding: EdgeInsets.all(16.0),
-                                child:
-                                    Image.file(File(_imageFile?.path ?? "")))))
-                    : Container(),
-                _textSend != ""
-                    ? Padding(
-                        padding: EdgeInsets.fromLTRB(8, 16, 32, 16),
-                        child: Container(
-                            decoration: BoxDecoration(
-                                color: Color.fromRGBO(100, 100, 100, 0.7),
-                                borderRadius:
-                                    BorderRadius.all(Radius.circular(10.0))),
-                            child: Padding(
-                                padding: EdgeInsets.all(16.0),
-                                child: Text(_textSend,
-                                    style: TextStyle(color: Colors.white)))))
-                    : Container()
+                Container(
+                    padding: const EdgeInsets.all(8.0),
+                    decoration: BoxDecoration(
+                        color: const Color.fromARGB(172, 63, 54, 72),
+                        border: Border.all(
+                            width: 2,
+                            color: const Color.fromRGBO(70, 70, 70, 1.0)),
+                        boxShadow: const [
+                          BoxShadow(
+                            color:
+                                Color.fromRGBO(40, 40, 40, 0.5), // Shadow color
+                            blurRadius: 10.0, // Adjust blur for softness
+                            offset: Offset(
+                                -5, -5), // Negative offset for inset effect
+                          )
+                        ]),
+                    child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "RESPONSE",
+                            style: TextStyle(
+                                color: Color.fromRGBO(100, 100, 100, 1.0),
+                                fontWeight: FontWeight.bold),
+                          ),
+                          _botResponse != ""
+                              ? Container(
+                                  decoration: const BoxDecoration(
+                                      borderRadius: BorderRadius.all(
+                                          Radius.circular(10.0))),
+                                  child: Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Text(_botResponse ?? "Thinking...",
+                                          style: const TextStyle(
+                                              color: Colors.white))))
+                              : _responseLoading
+                                  ? Container(
+                                      decoration: const BoxDecoration(
+                                          borderRadius: BorderRadius.all(
+                                              Radius.circular(10.0))),
+                                      child: const Padding(
+                                          padding: EdgeInsets.all(8.0),
+                                          child: Text("Thinking...",
+                                              style: TextStyle(
+                                                  color: Colors.white))))
+                                  : Container()
+                        ])),
+                Container(
+                    padding: const EdgeInsets.all(8.0),
+                    decoration: BoxDecoration(
+                        border: Border.all(
+                            width: 2,
+                            color: const Color.fromRGBO(70, 70, 70, 1.0)),
+                        boxShadow: const [
+                          BoxShadow(
+                            color:
+                                Color.fromRGBO(40, 40, 40, 0.5), // Shadow color
+                            blurRadius: 10.0, // Adjust blur for softness
+                            offset: Offset(
+                                -5, -5), // Negative offset for inset effect
+                          )
+                        ]),
+                    child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "QUESTION",
+                            style: TextStyle(
+                                color: Color.fromRGBO(100, 100, 100, 1.0),
+                                fontWeight: FontWeight.bold),
+                          ),
+                          _imageFile != null
+                              ? Container(
+                                  decoration: const BoxDecoration(
+                                      borderRadius: BorderRadius.all(
+                                          Radius.circular(10.0))),
+                                  child: Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Image.file(
+                                          File(_imageFile?.path ?? ""))))
+                              : _textSend != ""
+                                  ? Container(
+                                      decoration: const BoxDecoration(
+                                          borderRadius: BorderRadius.all(
+                                              Radius.circular(10.0))),
+                                      child: Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: Text(_textSend,
+                                              style: const TextStyle(
+                                                  color: Colors.white))))
+                                  : Container()
+                        ]))
               ],
             ),
           ),
